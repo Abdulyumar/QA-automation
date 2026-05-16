@@ -1,0 +1,72 @@
+name: QA Automation Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 */6 * * *'  # Run every 6 hours against live APIs
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run schema validation tests
+        run: |
+          pytest tests/test_schema_validation.py -v --tb=short \
+            --junitxml=reports/schema-results.xml
+
+      - name: Run market data tests
+        run: |
+          pytest tests/test_market_data.py -v --tb=short \
+            --junitxml=reports/market-results.xml
+
+      - name: Run async feed tests
+        run: |
+          pytest tests/test_async_feeds.py -v --tb=short \
+            --junitxml=reports/async-results.xml \
+            --asyncio-mode=auto
+
+      - name: Run full suite with coverage
+        run: |
+          pytest tests/ --cov=tests --cov-report=term-missing \
+            --cov-report=xml:reports/coverage.xml \
+            --asyncio-mode=auto -v
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-reports-py${{ matrix.python-version }}
+          path: reports/
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Pipeline failed — test reports available in artifacts"
