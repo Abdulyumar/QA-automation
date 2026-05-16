@@ -20,15 +20,15 @@ APIs covered: CoinGecko, CoinGlass (funding rates), OHLCV feeds
 
 ## Project Structure
 
-crypto-market-data-qa/
-├── .github/workflows/ci.yml     ← CI pipeline (runs on push + every 6h)
-├── tests/
-│   ├── conftest.py              ← Shared fixtures, mock factories, helpers
-│   ├── test_market_data.py      ← Price & OHLCV endpoint tests
-│   ├── test_async_feeds.py      ← Async, concurrent, and real-time feed tests
-│   └── test_schema_validation.py← Response structure & data integrity tests
-├── requirements.txt
-└── README.md
+    crypto-market-data-qa/
+    ├── .github/workflows/ci.yml     ← CI pipeline (runs on push + every 6h)
+    ├── tests/
+    │   ├── conftest.py              ← Shared fixtures, mock factories, helpers
+    │   ├── test_market_data.py      ← Price & OHLCV endpoint tests
+    │   ├── test_async_feeds.py      ← Async, concurrent, and real-time feed tests
+    │   └── test_schema_validation.py← Response structure & data integrity tests
+    ├── requirements.txt
+    └── README.md
 
 
 
