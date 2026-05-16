@@ -107,4 +107,3 @@ Market cap is validated against `price × circulating_supply` with a 10% toleran
 ## Background
 
 This suite reflects testing patterns applied during production work on crypto exchange infrastructure — validating multi-API async pipelines, catching silent data failures, and ensuring output correctness before release.
-```
