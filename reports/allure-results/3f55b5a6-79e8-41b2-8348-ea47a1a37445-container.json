@@ -1,0 +1,1 @@
+{"uuid": "af7d46d3-e2dd-41c6-99fe-35311a763337", "children": ["5172067e-d4d3-4fe5-b3fa-cb7a93d16194"], "befores": [{"name": "sample_ohlcv_payload", "status": "passed", "start": 1779000090298, "stop": 1779000090299}], "start": 1779000090298, "stop": 1779000090304}

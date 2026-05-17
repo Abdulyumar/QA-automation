@@ -1,0 +1,1 @@
+07:41:29 [INFO    ] qa.test_chaos — Semaphore test: peak_concurrency=3 limit=3

@@ -1,4 +1,4 @@
-name: QA Automation Pipeline
+name: QA Pipeline — Crypto Market Data
 
 on:
   push:
@@ -6,67 +6,118 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: '0 */6 * * *'  # Run every 6 hours against live APIs
+    - cron: "0 */6 * * *"   # Every 6 hours against live endpoints
 
 jobs:
   test:
+    name: Test Suite (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         python-version: ["3.10", "3.11"]
+      fail-fast: false
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: pip
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run schema validation tests
+      - name: Create report directories
         run: |
-          pytest tests/test_schema_validation.py -v --tb=short \
-            --junitxml=reports/schema-results.xml
+          mkdir -p reports/allure-results logs
 
-      - name: Run market data tests
+      - name: Run mock test suite (offline)
         run: |
-          pytest tests/test_market_data.py -v --tb=short \
-            --junitxml=reports/market-results.xml
+          pytest tests/ \
+            --ignore=tests/test_chaos.py \
+            --cov=tests \
+            --cov-report=term-missing \
+            --cov-report=xml:reports/coverage.xml
+        env:
+          LIVE_TESTS: "0"
 
-      - name: Run async feed tests
+      - name: Run chaos + negative tests
         run: |
-          pytest tests/test_async_feeds.py -v --tb=short \
-            --junitxml=reports/async-results.xml \
-            --asyncio-mode=auto
+          pytest tests/test_chaos.py -v --tb=long
+        env:
+          LIVE_TESTS: "0"
 
-      - name: Run full suite with coverage
-        run: |
-          pytest tests/ --cov=tests --cov-report=term-missing \
-            --cov-report=xml:reports/coverage.xml \
-            --asyncio-mode=auto -v
-
-      - name: Upload test reports
-        uses: actions/upload-artifact@v3
+      - name: Upload HTML test report
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: test-reports-py${{ matrix.python-version }}
-          path: reports/
+          name: html-report-py${{ matrix.python-version }}
+          path: reports/test_report.html
 
-      - name: Notify on failure
-        if: failure()
+      - name: Upload Allure results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: allure-results-py${{ matrix.python-version }}
+          path: reports/allure-results/
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-py${{ matrix.python-version }}
+          path: reports/coverage.xml
+
+      - name: Upload structured logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: qa-logs-py${{ matrix.python-version }}
+          path: logs/
+
+  live-tests:
+    name: Live API Validation (scheduled only)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    needs: test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Create report directories
+        run: mkdir -p reports/allure-results logs
+
+      - name: Run live API tests
         run: |
-          echo "Pipeline failed — test reports available in artifacts"
+          pytest tests/ -v --tb=short -m "not chaos"
+        env:
+          LIVE_TESTS: "1"
+          COINGECKO_API_KEY: ${{ secrets.COINGECKO_API_KEY }}
+          COINGLASS_API_KEY: ${{ secrets.COINGLASS_API_KEY }}
+
+      - name: Upload live test HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-test-report
+          path: reports/test_report.html
+
+      - name: Upload live test logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-test-logs
+          path: logs/

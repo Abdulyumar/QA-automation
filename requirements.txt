@@ -1,5 +1,20 @@
-pytest==9.0.2
-pytest-asyncio==1.3.0
-httpx==0.27.0
-pytest-cov==7.0.0
-anyio>=4.0
+# Core async HTTP
+httpx>=0.27.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-mock>=3.12.0
+
+# Reporting — HTML report (no external server needed)
+pytest-html>=4.1.1
+
+# Reporting — Allure (requires allure CLI installed separately)
+# Install CLI: https://allurereport.org/docs/install/
+allure-pytest>=2.13.5
+
+# Coverage
+pytest-cov>=5.0.0
+
+# Type hints (dev only)
+typing-extensions>=4.10.0

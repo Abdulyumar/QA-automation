@@ -1,0 +1,2 @@
+[35mDEBUG   [0m asyncio:proactor_events.py:633 Using proactor: IocpProactor
+[35mDEBUG   [0m asyncio:proactor_events.py:633 Using proactor: IocpProactor

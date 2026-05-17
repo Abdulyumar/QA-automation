@@ -1,0 +1,1 @@
+07:41:28 [INFO    ] qa.test_chaos — Testing missing market_cap detection: market_data keys=['current_price', 'total_volume', 'price_change_percentage_24h', 'circulating_supply']
